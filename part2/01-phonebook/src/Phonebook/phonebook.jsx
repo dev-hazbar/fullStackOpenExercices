@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import phonebookService from '../services/phonebook'
+
 
 const Title2  = ({name}) => <h2>{name}</h2>
 
@@ -10,7 +12,10 @@ const Filter = ({inputValue, onChange}) => {
   )
 }
 
-const ShowPhonebook = ({persons, filter}) => {
+const ShowPhonebook = ({personsState, filter}) => {
+
+  const persons = personsState.persons
+  // const setPersons = personsState.setPersons
 
   const filteredPersons = persons.filter(person =>
     person.name.toLowerCase().includes(filter.toLowerCase())
@@ -18,17 +23,56 @@ const ShowPhonebook = ({persons, filter}) => {
 
   return (
     <div>
-      {filteredPersons.map(person => <ShowPerson key={person.id} person={person} />)}
+      {filteredPersons.map(
+        person => {
+          return (
+            
+            <ShowPerson key={person.id} person={person} personsState={personsState}/>
+            
+          )
+        }
+      )}
     </div>
   )
 }
 
-const ShowPerson = ({person}) => <p>{person.name} {person.number}</p>
+const ShowPerson = ({person, personsState}) => {
+
+  const deleteContact = (event) => {
+    event.preventDefault()
+
+    if (window.confirm(`Delete ${person.name}?`)) {
+      phonebookService
+        .deleteContact(person.id)
+        .then(response => {
+          console.log(response)
+          personsState.setPersons(personsState.persons
+            .filter(person => person.id !== response.data.id)
+          )
+        })
+        .catch(error => {
+          console.log(error)
+        })
+    }
+  }
+
+
+  return (
+    <p>
+      {person.name} {person.number}
+      <button onClick={deleteContact}>delete</button>
+      {/* <button onClick={editContact}>edit</button> */}
+    </p>
+  )
+}
 
 
 
 
-const PersonForm = ({persons, setPersons}) => {
+const PersonForm = ({personsState}) => {
+
+  const persons = personsState.persons
+  const setPersons = personsState.setPersons
 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
@@ -48,10 +92,25 @@ const PersonForm = ({persons, setPersons}) => {
 
     if (newName === '') return
 
-    let newNameLow = newName.toLowerCase()
+    const newNameLow = newName.toLowerCase()
+    const existingPerson = persons.filter(person => person.name.toLowerCase() === newNameLow)
 
-    if(persons.filter(person => person.name.toLowerCase() === newNameLow).length > 0)
-      return alert(`${newName} is already added to phonebook`)
+    if(existingPerson.length > 0){
+
+      phonebookService
+      .update(existingPerson[0].id, {name: newName, number: newNumber})
+      .then(response => {
+        console.log(response)
+        setPersons(persons.map(person => person.id !== response.data.id ? person : response.data))
+        setNewName('')
+        setNewNumber('')
+      })
+      .catch(error => {
+        console.log(error)
+      })
+
+      return
+    }
 
     let noteObject = {
       name: newName,
@@ -59,9 +118,19 @@ const PersonForm = ({persons, setPersons}) => {
       id: String(persons.length + 1),
     }
 
-    setPersons(persons.concat(noteObject))
-    setNewName('')
-    setNewNumber('')
+    phonebookService
+      .create(noteObject)
+      .then(response => {
+        console.log(response)
+        setPersons(persons.concat(response.data))
+        setNewName('')
+        setNewNumber('')
+      })
+      .catch(error => {
+        console.log(error.response.data)
+        alert(error.response.data.error)
+      })
+
   }
 
 
@@ -78,7 +147,7 @@ const PersonForm = ({persons, setPersons}) => {
 
 
 
-const Phonebook = ({persons, setPersons}) => {
+const Phonebook = ({personsState}) => {
 
     const [filterText, setFilterText] = useState('')
 
@@ -93,10 +162,10 @@ const Phonebook = ({persons, setPersons}) => {
         <Filter inputValue={filterText} onChange={handleFilterChange} />
 
         <Title2 name="Add a new" />
-        <PersonForm persons={persons} setPersons={setPersons} />
+        <PersonForm personsState={personsState}  />
 
         <Title2 name="Numbers" />
-        <ShowPhonebook persons={persons} filter={filterText}/>
+        <ShowPhonebook personsState={personsState}  filter={filterText}/>
         </div>
     )
 }

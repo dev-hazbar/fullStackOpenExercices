@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import Phonebook from './Phonebook/phonebook'
+import phonebookService from './services/phonebook'
 
 const App = () => {
   const [persons, setPersons] = useState([])
+  const personsState = { persons, setPersons}
   // [
   //   { name: 'Arto Hellas', number: '040-123456', id: 1 },
   //   { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
@@ -13,10 +14,11 @@ const App = () => {
 
   useEffect(() => {
     console.log('effect')
-    axios
-      .get('http://localhost:3001/persons')
+    phonebookService
+      .getAll('http://localhost:3001/persons')
       .then(response => {
         console.log('promise fulfilled')
+        console.log(response.data)
         setPersons(response.data)
       })
   }, [])
@@ -24,7 +26,7 @@ const App = () => {
 
 
 
-  return <Phonebook persons={persons} setPersons={setPersons} />
+  return <Phonebook personsState={personsState} />
 }
 
 export default App
