@@ -26,9 +26,7 @@ const ShowPhonebook = ({personsState, filter}) => {
       {filteredPersons.map(
         person => {
           return (
-            
             <ShowPerson key={person.id} person={person} personsState={personsState}/>
-            
           )
         }
       )}
@@ -76,6 +74,7 @@ const PersonForm = ({personsState}) => {
 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
+  const [message, setMessage] = useState({content: null, isSuccess: false})
 
   const handleNoteChange = (event) => {
     console.log(event.target.value)
@@ -104,9 +103,11 @@ const PersonForm = ({personsState}) => {
         setPersons(persons.map(person => person.id !== response.data.id ? person : response.data))
         setNewName('')
         setNewNumber('')
+        setMessage({content: `Updated ${response.data.name}'s number`, isSuccess: true})
       })
       .catch(error => {
         console.log(error)
+        setMessage({content: `Information of <${newName}> has alredy been removed from server`, isSuccess: false})
       })
 
       return
@@ -125,10 +126,12 @@ const PersonForm = ({personsState}) => {
         setPersons(persons.concat(response.data))
         setNewName('')
         setNewNumber('')
+        setMessage({content: `Added ${response.data.name}`, isSuccess: true})
       })
       .catch(error => {
         console.log(error.response.data)
         alert(error.response.data.error)
+        setMessage({content: `Error adding ${newName}: ${error.response.data.error}`, isSuccess: false})
       })
 
   }
@@ -141,6 +144,20 @@ const PersonForm = ({personsState}) => {
         <div>number: <input value={newNumber} onChange={handleNumberChange} /></div>
         <div><button onClick={addNewContact}>add</button></div>
       </form>
+      <br />
+      <Notification message={message.content} isSuccess={message.isSuccess} />
+    </div>
+  )
+}
+
+const Notification = ({ message, isSuccess }) => {
+  if (message === null || message === '') return null
+
+  const messageClass = isSuccess ? 'success' : 'error'
+
+  return (
+    <div className={messageClass}>
+      {message}
     </div>
   )
 }
@@ -149,25 +166,25 @@ const PersonForm = ({personsState}) => {
 
 const Phonebook = ({personsState}) => {
 
-    const [filterText, setFilterText] = useState('')
+  const [filterText, setFilterText] = useState('')
 
-    const handleFilterChange = (event) => {
-      console.log(event.target.value)
-      setFilterText(event.target.value)
-    }
+  const handleFilterChange = (event) => {
+    console.log(event.target.value)
+    setFilterText(event.target.value)
+  }
 
-    return (
-        <div>
-        <Title2 name="Phonebook" />
-        <Filter inputValue={filterText} onChange={handleFilterChange} />
+  return (
+    <div>
+    <Title2 name="Phonebook" />
+    <Filter inputValue={filterText} onChange={handleFilterChange} />
 
-        <Title2 name="Add a new" />
-        <PersonForm personsState={personsState}  />
+    <Title2 name="Add a new" />
+    <PersonForm personsState={personsState}  />
 
-        <Title2 name="Numbers" />
-        <ShowPhonebook personsState={personsState}  filter={filterText}/>
-        </div>
-    )
+    <Title2 name="Numbers" />
+    <ShowPhonebook personsState={personsState}  filter={filterText}/>
+    </div>
+  )
 }
 
 
