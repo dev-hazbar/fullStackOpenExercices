@@ -71,6 +71,16 @@ Crear una api local
 >npm run server
 >```
 
+
+
+install axios
+
+```bash
+npm install axios
+```
+
+
+
 ## Ejercicios 2.11.
 
 ## Ejercicios 2.12-2.15
